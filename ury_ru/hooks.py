@@ -37,8 +37,106 @@ doc_events = {
 # Fixtures: RU-specific customizations that can be exported/imported.
 # fixtures = []
 
-# Scheduled tasks / hooks to register integrations here as they land.
-# scheduler_events = {}
+# Scheduled tasks: периодический обмен с 1С (источник: настройки модуля).
+scheduler_events = {
+    "cron": {
+        "*/5 * * * *": [
+            "ury_ru.ury_ru.URY_RU_1C.sync.run_sync_if_due"
+        ]
+    }
+}
+
+
+def _register_provider(settings_doctype, field, factory_map, register_fn):
+    """Общий хелпер: регистрирует провайдер по выбранному в настройках имени."""
+    import frappe
+
+    if not frappe.db.exists(settings_doctype, settings_doctype):
+        return
+    settings = frappe.get_doc(settings_doctype, settings_doctype)
+    selected = (settings.get(field) or "").lower()
+    factory = factory_map.get(selected)
+    if factory:
+        register_fn(factory())
+
+
+def register_providers_default():
+    """Регистрирует провайдеры всех RU-модулей по настройкам.
+
+    Вызывается при старте (напр. из after_install / bench restart).
+    По умолчанию во всех модулях стоит честный NoOp — реальный/simulated
+    провайдер подключается только если выбран в настройках модуля.
+    """
+    # 1С
+    _register_provider(
+        "URY RU 1C Settings", "provider",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru.URY_RU_1C.drivers.simulated", fromlist=["SimulatedOneCProvider"]
+            ).SimulatedOneCProvider(),
+        },
+        __import__("ury_ru.ury_ru.URY_RU_1C.one_c", fromlist=["register_1c_provider"]).register_1c_provider,
+    )
+    # Фискализация
+    _register_provider(
+        "URY RU Fiscal Settings", "driver",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru.URY_RU_Fiscal.drivers.simulated", fromlist=["SimulatedFiscalDriver"]
+            ).SimulatedFiscalDriver(),
+        },
+        __import__("ury_ru.ury_ru.URY_RU_Fiscal.fiscal_driver", fromlist=["register_fiscal_driver"]).register_fiscal_driver,
+    )
+    # Платежи
+    _register_provider(
+        "URY RU Payments Settings", "provider",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru.URY_RU_Payments.drivers.simulated", fromlist=["SimulatedPaymentProvider"]
+            ).SimulatedPaymentProvider(),
+        },
+        __import__("ury_ru.ury_ru.URY_RU_Payments.payments", fromlist=["register_payment_provider"]).register_payment_provider,
+    )
+    # Доставка
+    _register_provider(
+        "URY RU Delivery Settings", "aggregator",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru.URY_RU_Delivery.drivers.simulated", fromlist=["SimulatedDeliveryProvider"]
+            ).SimulatedDeliveryProvider(),
+        },
+        __import__("ury_ru.ury_ru.URY_RU_Delivery.delivery", fromlist=["register_delivery_provider"]).register_delivery_provider,
+    )
+    # Маркировка
+    _register_provider(
+        "URY RU Marking Settings", "provider",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru.URY_RU_Marking.drivers.simulated", fromlist=["SimulatedMarkingProvider"]
+            ).SimulatedMarkingProvider(),
+        },
+        __import__("ury_ru.ury_ru.URY_RU_Marking.marking", fromlist=["register_marking_provider"]).register_marking_provider,
+    )
+    # ЕГАИС
+    _register_provider(
+        "URY RU EGAIS Settings", "provider",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru.URY_RU_EGAIS.drivers.simulated", fromlist=["SimulatedEgaisProvider"]
+            ).SimulatedEgaisProvider(),
+        },
+        __import__("ury_ru.ury_ru.URY_RU_EGAIS.egais", fromlist=["register_egais_provider"]).register_egais_provider,
+    )
+    # Меркурий
+    _register_provider(
+        "URY RU Mercury Settings", "provider",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru.URY_RU_Mercury.drivers.simulated", fromlist=["SimulatedMercuryProvider"]
+            ).SimulatedMercuryProvider(),
+        },
+        __import__("ury_ru.ury_ru.URY_RU_Mercury.mercury", fromlist=["register_mercury_provider"]).register_mercury_provider,
+    )
 
 
 def register_fiscal_driver_default():

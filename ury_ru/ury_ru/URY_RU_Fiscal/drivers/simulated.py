@@ -35,6 +35,15 @@ class SimulatedFiscalDriver(FiscalDriver):
 	def close_shift(self, cashier):
 		return {"status": "Closed"}
 
+	def register_correction(self, correction):
+		fd = frappe.utils.cint(frappe.db.count("URY RU Fiscal Receipt")) + 1
+		return {
+			"fiscal_document_number": fd,
+			"fiscal_sign": frappe.generate_hash(length=10),
+			"total": correction.get("total"),
+			"status": "Sent",
+		}
+
 	def get_kkt_info(self):
 		return {
 			"model": "Simulated KKT",

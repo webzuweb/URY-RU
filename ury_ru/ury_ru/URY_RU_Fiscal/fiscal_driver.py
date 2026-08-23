@@ -44,6 +44,14 @@ class FiscalDriver:
 		"""Закрыть смену (Z-отчёт)."""
 		raise NotImplementedError
 
+	def register_correction(self, correction):
+		"""Пробить чек коррекции (ручная корректировка расчётов).
+
+		:param correction: dict из fiscal_correction.build_correction()
+		:return: dict {"fiscal_document_number": int, "fiscal_sign": str, ...}
+		"""
+		raise NotImplementedError
+
 	def get_kkt_info(self):
 		"""Информация о ККТ: РНМ, ЗН, ФН, версия ФФД, статус."""
 		raise NotImplementedError
@@ -67,6 +75,9 @@ class NoOpFiscalDriver(FiscalDriver):
 		frappe.throw(_("Фискальный драйвер не настроен."), frappe.ValidationError)
 
 	def close_shift(self, cashier):
+		frappe.throw(_("Фискальный драйвер не настроен."), frappe.ValidationError)
+
+	def register_correction(self, correction):
 		frappe.throw(_("Фискальный драйвер не настроен."), frappe.ValidationError)
 
 	def get_kkt_info(self):
