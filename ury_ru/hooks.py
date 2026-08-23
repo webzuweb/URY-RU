@@ -24,8 +24,44 @@ required_apps = ["ury", "erpnext"]
 # doctype_tree_js = {"Doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"Doctype" : "public/js/doctype_calendar.js"}
 
+# Document Events
+# ---------------
+# Фискализация: при submit инвойса пробиваем чек, при cancel — возврат.
+doc_events = {
+    "POS Invoice": {
+        "on_submit": "ury_ru.ury_ru.URY_RU_Fiscal.fiscal_hooks.on_submit",
+        "on_cancel": "ury_ru.ury_ru.URY_RU_Fiscal.fiscal_hooks.on_cancel",
+    },
+}
+
 # Fixtures: RU-specific customizations that can be exported/imported.
 # fixtures = []
 
 # Scheduled tasks / hooks to register integrations here as they land.
 # scheduler_events = {}
+
+
+def register_fiscal_driver_default():
+    """Регистрирует фискальный драйвер при старте по настройкам.
+
+    По умолчанию — NoOp (честная ошибка). Simulated включается в тестах/демо
+    явно через URY RU Fiscal Settings (driver = "Simulated").
+    """
+    import frappe
+    from ury_ru.ury_ru.URY_RU_Fiscal.fiscal_driver import (
+        register_fiscal_driver,
+    )
+
+    if not frappe.db.exists("URY RU Fiscal Settings", "URY RU Fiscal Settings"):
+        return
+
+    settings = frappe.get_doc("URY RU Fiscal Settings", "URY RU Fiscal Settings")
+    driver_name = (settings.get("driver") or "").lower()
+
+    if driver_name == "simulated":
+        from ury_ru.ury_ru.URY_RU_Fiscal.drivers.simulated import (
+            SimulatedFiscalDriver,
+        )
+        register_fiscal_driver(SimulatedFiscalDriver())
+    # ATOL / Shtrih-M — регистрируются только после реальной реализации,
+    # пока NoOpFiscalDriver остаётся активным по умолчанию.
