@@ -5,3 +5,5 @@ URY_RU_Delivery
 URY_RU_Marking
 URY_RU_EGAIS
 URY_RU_Mercury
+URY_RU_Deepseek
+URY_RU_Telegram

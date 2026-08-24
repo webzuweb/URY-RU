@@ -37,11 +37,15 @@ doc_events = {
 # Fixtures: RU-specific customizations that can be exported/imported.
 # fixtures = []
 
-# Scheduled tasks: периодический обмен с 1С (источник: настройки модуля).
+# Scheduled tasks: периодический обмен с 1С + отчёты/аналитика.
 scheduler_events = {
     "cron": {
         "*/5 * * * *": [
-            "ury_ru.ury_ru_1c.sync.run_sync_if_due"
+            "ury_ru.ury_ru_1c.sync.run_sync_if_due",
+            "ury_ru.ury_ru_telegram.scheduler.run_daily_report"
+        ],
+        "0 3 * * *": [
+            "ury_ru.ury_ru_deepseek.scheduler.run_daily_analysis"
         ]
     }
 }
@@ -136,6 +140,32 @@ def register_providers_default():
             ).SimulatedMercuryProvider(),
         },
         __import__("ury_ru.ury_ru_mercury.mercury", fromlist=["register_mercury_provider"]).register_mercury_provider,
+    )
+    # Deepseek (ИИ-аналитика)
+    _register_provider(
+        "URY RU Deepseek Settings", "provider",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru_deepseek.drivers.simulated", fromlist=["SimulatedDeepseekProvider"]
+            ).SimulatedDeepseekProvider(),
+            "deepseek_api": lambda: __import__(
+                "ury_ru.ury_ru_deepseek.drivers.deepseek_api", fromlist=["DeepseekApiProvider"]
+            ).DeepseekApiProvider(),
+        },
+        __import__("ury_ru.ury_ru_deepseek.deepseek", fromlist=["register_deepseek_provider"]).register_deepseek_provider,
+    )
+    # Telegram (рассылка отчётов)
+    _register_provider(
+        "URY RU Telegram Settings", "provider",
+        {
+            "simulated": lambda: __import__(
+                "ury_ru.ury_ru_telegram.drivers.simulated", fromlist=["SimulatedTelegramProvider"]
+            ).SimulatedTelegramProvider(),
+            "telegram_bot": lambda: __import__(
+                "ury_ru.ury_ru_telegram.drivers.telegram_bot", fromlist=["TelegramBotProvider"]
+            ).TelegramBotProvider(),
+        },
+        __import__("ury_ru.ury_ru_telegram.telegram", fromlist=["register_telegram_provider"]).register_telegram_provider,
     )
 
 
