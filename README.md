@@ -4,7 +4,7 @@
 
 **Открытая система управления рестораном для российского рынка**
 *Open-source restaurant management system for the Russian market*
-
+Описание проекта https://habr.com/ru/articles/1073824/
 Базируется на [URY](https://github.com/ury-erp/ury) · ERPNext · Frappe Framework
 
 </div>
